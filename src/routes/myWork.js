@@ -1,0 +1,7 @@
+import { Router } from 'express';
+import { z } from 'zod';
+const actionSchema=z.object({entityType:z.enum(['REPORT','EXPENSE','SUBMITTAL','WORKFLOW_ACTION','SITE_INSTRUCTION','RFI','TASK','ISSUE','NOTIFICATION','MATERIAL_REQUEST','PROCUREMENT_REQUISITION','PURCHASE_ORDER','SUPPLIER_INVOICE','PURCHASE_QUOTATION','PAYROLL_RUN']),entityId:z.string().uuid(),action:z.enum(['APPROVE','APPROVE_WITH_COMMENTS','START_REVIEW','ACCEPT','REJECT','CANCEL','SEND','PAID','VOID','DONE','ACKNOWLEDGED','DISMISSED','RESPOND','MARK_READ','TODO','IN_PROGRESS','BLOCKED','COMPLETED','OPEN','RESOLVED','CLOSED']),reason:z.string().trim().max(2000).optional(),payload:z.record(z.string(),z.unknown()).optional()});
+export function createMyWorkRouter({service,authMiddleware,authorize}){const r=Router();r.use(authMiddleware);
+ r.get('/companies/:companyId/my-work',authorize('my-work:read'),async(req,res,next)=>{try{res.json({success:true,data:await service.get({companyId:req.params.companyId,userId:req.user.id,role:req.authorization.role,permissions:req.authorization.permissions})});}catch(e){next(e)}});
+ r.post('/companies/:companyId/my-work/actions',authorize('my-work:act'),async(req,res,next)=>{try{const input=actionSchema.parse(req.body);res.json({success:true,data:await service.act({companyId:req.params.companyId,userId:req.user.id,...input}),message:'Workflow action completed and recorded'});}catch(e){next(e)}});
+ return r;}

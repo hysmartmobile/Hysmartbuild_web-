@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { calculateBoqCommercials } from './boqCommercialCalculations.js';
 const n=v=>Number(v||0);
 const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
@@ -123,7 +123,7 @@ export class OperatingSystemService {
     const [schedule,measurements,materials,productivity,poItems,expenses,subItems,ipcs,docs,comments,actions]=await Promise.all([
       this.supabase.from('project_schedule_activities').select('id,activity_code,name,status,percent_complete,planned_start,planned_finish,actual_start,actual_finish,forecast_finish,schedule_variance_days,is_critical,total_float_days,responsible_user_id,planned_quantity,unit,planned_value').eq('company_id',companyId).eq('project_id',projectId).eq('estimate_item_id',itemId),
       this.supabase.from('project_progress_measurements').select('id,measurement_date,quantity_completed,percent_complete,measured_value,status,location,notes,measured_by').eq('company_id',companyId).eq('project_id',projectId).eq('estimate_item_id',itemId).order('measurement_date',{ascending:false}),
-      this.supabase.from('project_material_plans').select('id,material_id,planned_quantity,planned_unit_cost,wastage_allowance_percent,lead_time_days,required_by,status,materials:materials!project_material_plans_material_id_fkey(name,unit)').eq('company_id',companyId).eq('project_id',projectId).eq('estimate_item_id',itemId),
+      this.supabase.from('project_material_plans').select('id,material_id,planned_quantity,planned_unit_cost,wastage_allowance_percent,lead_time_days,required_by,status,materials:materials!project_material_plan_material_tenant_fk(name,unit)').eq('company_id',companyId).eq('project_id',projectId).eq('estimate_item_id',itemId),
       this.supabase.from('project_productivity_records').select('id,work_date,worker_count,labour_hours,quantity_completed,unit,trade,notes').eq('company_id',companyId).eq('project_id',projectId).eq('estimate_item_id',itemId).order('work_date',{ascending:false}),
       this.supabase.from('purchase_order_items').select('id,purchase_order_id,description,quantity,unit,unit_price,received_quantity,line_total,purchase_orders!inner(id,po_no,project_id,status,order_date,expected_date,currency,subtotal,total,supplier_id,suppliers(name))').eq('company_id',companyId).eq('estimate_item_id',itemId).eq('purchase_orders.project_id',projectId),
       this.supabase.from('expenses').select('id,description,category,amount,currency,expense_date,status,vendor_name,supplier_invoice_id').eq('company_id',companyId).eq('project_id',projectId).eq('estimate_item_id',itemId).in('status',['APPROVED','PAID']).order('expense_date',{ascending:false}),

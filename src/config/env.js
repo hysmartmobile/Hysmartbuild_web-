@@ -23,6 +23,7 @@ const schema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   CUSTOMER_CARE_LOCAL_MODEL_URL: z.string().url().default('http://127.0.0.1:11434'),
   CUSTOMER_CARE_LOCAL_MODEL_NAME: z.string().min(1).default('qwen2.5:7b'),
+  HYSMART_PROJECT_AI_ENABLED: z.preprocess((value) => value === true || String(value || '').trim().toLowerCase() === 'true', z.boolean()).default(false),
   BILLING_CALLBACK_URL: z.string().url().default("http://localhost:5173/billing/callback"),
   WEB_APP_URL: z.string().url().default("http://localhost:5173")
 }).superRefine((value, ctx) => {
@@ -59,6 +60,7 @@ export const env = {
   stripeWebhookSecret: parsed.data.STRIPE_WEBHOOK_SECRET,
   customerCareLocalModelUrl: parsed.data.CUSTOMER_CARE_LOCAL_MODEL_URL,
   customerCareLocalModelName: parsed.data.CUSTOMER_CARE_LOCAL_MODEL_NAME,
+  projectAiEnabled: parsed.data.HYSMART_PROJECT_AI_ENABLED,
   billingCallbackUrl: parsed.data.BILLING_CALLBACK_URL,
   webAppUrl: parsed.data.WEB_APP_URL
 };

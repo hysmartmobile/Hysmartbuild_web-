@@ -1,14 +1,10 @@
-# HySmart Build Backend V1.4.0 deployment checklist
+# HySmart Build Web PWA V1.4.0 deployment checklist
 
-1. Configure production Supabase URL, anon key and service-role key on the Node server only.
-2. Apply every migration in `supabase/migrations/` in order, including `20261002140000_v1_4_offline_sync.sql`.
-3. Configure production CORS to the exact Web origin(s).
-4. Configure Paystack/Flutterwave secrets only on the server if billing is enabled.
-5. Deploy Node and expose HTTPS `/api/v1`.
-6. Test `POST /api/v1/companies/:companyId/sync/push` with an authenticated field user.
-7. Test duplicate operation replay: submit the same `operationId` twice and verify only one business change occurs.
-8. Test conflict handling: change a task/report on Web, then sync an offline update carrying the older `baseUpdatedAt`; the server must return `CONFLICT`.
-9. Test inventory movement replay and material-request replay.
-10. Monitor the `offline_sync_operations` table for conflicts and failed operational patterns.
+1. Run `npm install`.
+2. Copy `.env.example` to `.env` and configure the production Node API and Supabase public values.
+3. Run `npm run build` and deploy the generated `dist` directory to the selected static host.
+4. Verify the browser calls `/api/v1` on the production backend.
+5. Verify that mobile-created offline field records appear in the same company workspace after synchronization.
+6. Verify the top-bar sync indicator reports conflicts when the backend has recorded one.
 
-Do not put Supabase service-role, Paystack secret, or Flutterwave secret keys into Web or Mobile builds.
+Never expose backend service-role, Paystack secret, or Flutterwave secret credentials in this application.

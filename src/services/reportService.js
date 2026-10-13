@@ -73,12 +73,10 @@ export class ReportService {
 
   async decideReport({companyId,projectId,reportId,userId,decision,reason}) {
     await this.assertProject({companyId,projectId});
-    const patch = decision === "APPROVED"
-      ? {approval_status:"APPROVED",approved_by:userId,approved_at:new Date().toISOString(),rejection_reason:null}
-      : {approval_status:"REJECTED",approved_by:null,approved_at:null,rejection_reason:clean(reason)||null};
-    const {data,error}=await this.supabase.from("daily_site_reports").update(patch).eq("company_id",companyId).eq("project_id",projectId).eq("id",reportId).select().single();
-    if(error)throw error;
-    return data;
+    const action=decision==="APPROVED"?"APPROVE":"REJECT";
+    const {data,error}=await this.supabase.rpc("perform_my_work_action",{p_company_id:companyId,p_user_id:userId,p_entity_type:"REPORT",p_entity_id:reportId,p_action:action,p_reason:reason||null,p_payload:{projectId}});
+    if(error) throw error;
+    return data?.item??data;
   }
 
   async createPhotoDownload({companyId,projectId,reportId,photoId}) {

@@ -3,7 +3,7 @@ export class ProcurementRiskService{
  constructor({supabase}){this.supabase=supabase;}
  async analyze({companyId,projectId}){
   const [plans,inv,pos,acts,prod,sup]=await Promise.all([
-   this.supabase.from('project_material_plans').select('id,project_id,material_id,required_by,planned_quantity,status,materials:materials!project_material_plans_material_id_fkey(unit)').eq('company_id',companyId).in('status',['PLANNED','ORDERED','PARTIALLY_RECEIVED']),
+   this.supabase.from('project_material_plans').select('id,project_id,material_id,required_by,planned_quantity,status,materials:materials!project_material_plan_material_tenant_fk(unit)').eq('company_id',companyId).in('status',['PLANNED','ORDERED','PARTIALLY_RECEIVED']),
    this.supabase.from('inventory_balances').select('id,material_id,site_id,quantity,materials:material_id(unit),sites:site_id(project_id)').eq('company_id',companyId),
    this.supabase.from('purchase_orders').select('id,project_id,supplier_id,status,expected_date,total').eq('company_id',companyId),
    this.supabase.from('project_schedule_activities').select('id,project_id,name,planned_start,planned_finish,status').eq('company_id',companyId).neq('status','COMPLETED'),

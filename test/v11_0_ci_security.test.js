@@ -10,8 +10,8 @@ const backendPackage = JSON.parse(fs.readFileSync(path.join(root, 'HySmart-Build
 const webPackage = JSON.parse(fs.readFileSync(path.join(root, 'HySmart-Build-Web/package.json'), 'utf8'));
 
 test('v11 CI audits backend dependencies at high severity after locked install', () => {
-  assert.match(workflow, /working-directory: HySmart-Build-Backend\s+      - name: Audit backend dependency tree\s+        run: npm audit --audit-level=high/);
-  assert.match(workflow, /working-directory: HySmart-Build-Backend\s+      - name: Audit backend dependency tree\s+        run: npm audit --audit-level=high\s+        working-directory: HySmart-Build-Backend/);
+  assert.match(workflow, /name: Audit backend dependency tree[\s\S]*?run: npm audit --audit-level=high[\s\S]*?working-directory: HySmart-Build-Backend/);
+  assert.match(workflow, /name: Install backend dependencies[\s\S]*?run: npm ci/);
 });
 
 test('v11 CI audits frontend dependencies and retains production build gate', () => {

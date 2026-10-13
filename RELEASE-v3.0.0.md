@@ -1,5 +1,5 @@
-# Backend v3.0.0
+# Web v3.0.0
 
-Adds the Construction Control Tower service and protected API routes. The service composes existing Executive Intelligence, Treasury and Workflow Automation signals without duplicating source transactions.
+Adds the Construction Control Tower page, route, navigation entry, management recommendation cards, five-question status cards and 13-week cash-pressure view.
 
-Regression: 171/171 passing.
+Production Vite build requires CI verification because the local environment has no installed Vite executable.

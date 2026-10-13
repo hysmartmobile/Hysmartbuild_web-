@@ -1,21 +1,20 @@
-# HySmart Build Backend V2.2.0 — Planning, Scheduling & Progress Control
+# HySmart Build Web V2.2.0 — Planning & Schedule PWA
 
 ## Delivered
-- Tenant-scoped WBS management endpoints using the existing V2.0 WBS foundation.
-- Programme activities with planned/actual dates, status, progress, weights and responsible users.
-- Activity dependencies: Finish-to-Start, Start-to-Start, Finish-to-Finish and Start-to-Finish, including lag.
-- Server-side CPM forward/backward pass with total float and critical-path identification.
-- Dependency cycle prevention before persistence.
-- Schedule dashboard with planned vs actual progress, forecast completion, variance, critical and delayed activity counts.
-- Baseline programme snapshots and approval/superseding workflow.
-- Activity progress history and actual-start/actual-finish capture.
-- Delay register with reason categories, responsibility and potential EOT status.
-- Look-ahead planning endpoint for 2–12 week windows.
-- Composite tenant/project foreign keys for schedule relationships to prevent cross-project data attachment.
-- Schedule RBAC permissions: `schedule:read`, `schedule:manage`, `schedule:approve`.
+- New Planning workspace at `/planning`.
+- Project selector with schedule dashboard KPIs.
+- CSS-based Gantt/programme view with critical-path and completion indicators.
+- WBS creation and hierarchy display.
+- Activity creation.
+- Dependency creation for FS/SS/FF/SF relationships with lag.
+- Progress update workflow.
+- Baseline creation/approval controls.
+- Look-ahead panel with configurable 2, 3 or 6 week window.
+- Delay/EOT event register and capture.
+- Responsive mobile/tablet layout.
+- No new frontend dependency was introduced for the Gantt view.
 
 ## Verification
-- Backend test suite: **118/118 passing**.
-- All backend source JavaScript files pass `node --check`.
-- Web source: **35 JS/JSX files parsed with TypeScript's transpiler; 0 syntax diagnostics**.
-- Web production build was not executable in this environment because the dependency cache is missing `yallist-3.1.1.tgz`; no build-pass claim is made.
+- 35 web JS/JSX files parsed with TypeScript transpilation: 0 syntax diagnostics.
+- `npm ci --offline` could not complete because `yallist-3.1.1.tgz` is not available in the environment cache.
+- Therefore Vite production build remains a CI/deployment verification step.

@@ -1,13 +1,11 @@
-# HySmart Build Backend v1.3.1 — Production Alignment
+# HySmart Build Web PWA v1.3.1
 
-- Node.js + Express API under `/api/v1`
-- Supabase Auth/DB/Storage integration
-- Paystack + Flutterwave subscription checkout and webhook reconciliation
-- Provider reference verification before fulfillment
-- Subscription expiry enforcement while keeping billing accessible for renewal
-- Tenant/RBAC enforcement
-- Subscription project limits
-- Production error handling
-- 51/51 backend regression tests pass in the validation environment
+Aligned with the Node/Supabase `/api/v1` backend.
 
-Before live launch, configure production Supabase, HTTPS, Paystack/Flutterwave live credentials, webhook URLs, and run gateway sandbox/live-readiness tests.
+- Supabase session authentication
+- Company-scoped API access
+- Projects, sites, tasks, issues, milestones, reports, materials, workforce, finance, documents, communication, analytics, client portal and billing screens
+- Paystack/Flutterwave checkout callback verification
+- No payment/database service secrets in the browser
+
+Run `npm install`, configure `.env`, then `npm run build`.

@@ -13,5 +13,5 @@ test('role office links are permission-filtered and finance summary is gated',()
  assert.match(dashboard,/WORK_AREAS\.filter\(x=>permissions\.has\(x\.permission\)\)/);assert.match(dashboard,/canSeeFinance&&/);assert.match(dashboard,/accounting:read/);
 });
 test('dashboard data reloads when active company changes',()=>{
- assert.match(layout,/companyId:company\?\.id\|\|null/);assert.match(dashboard,/\[outlet\.companyId,outlet\.companyName,outlet\.role\]/);
+ assert.match(layout,/companyId:company\?\.id\|\|null/);assert.match(dashboard,/\[outlet\.companyId,outlet\.companyName,outlet\.role,canLoadAnalytics\]/);
 });

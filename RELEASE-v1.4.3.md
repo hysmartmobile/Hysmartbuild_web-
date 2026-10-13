@@ -2,7 +2,7 @@
 
 ## Scope
 - One authenticated user can create exactly one company.
-- A user may still belong to additional companies through single-use, expiring company invitations.
+- A user may still belong to additional companies through future invitation/membership flows.
 - Company is the billing tenant.
 - Company country, billing country, tax country, currency, locale, timezone and unit system are stored explicitly.
 - 14-day Starter trial starts automatically for new companies.

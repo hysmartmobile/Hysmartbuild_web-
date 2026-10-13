@@ -50,7 +50,10 @@ export class FinanceService {
     const {data,error}=await this.supabase.from("expenses").update(patch).eq("company_id",companyId).eq("id",expenseId).eq("status","PENDING").select().single(); if(error) throw error; return data;
   }
   async decideExpense({companyId,expenseId,userId,decision,reason}) {
-    const {data,error}=await this.supabase.rpc("approve_expense",{p_company_id:companyId,p_expense_id:expenseId,p_user_id:userId,p_decision:decision,p_reason:reason||null}); if(error) throw error; return data;
+    const action=decision==="APPROVED"?"APPROVE":"REJECT";
+    const {data,error}=await this.supabase.rpc("perform_my_work_action",{p_company_id:companyId,p_user_id:userId,p_entity_type:"EXPENSE",p_entity_id:expenseId,p_action:action,p_reason:reason||null,p_payload:{}});
+    if(error) throw error;
+    return data?.item??data;
   }
   async markPaid({companyId,expenseId,userId,reference}) {
     const {data,error}=await this.supabase.rpc("mark_expense_paid",{p_company_id:companyId,p_expense_id:expenseId,p_user_id:userId,p_reference:reference||null}); if(error) throw error; return data;

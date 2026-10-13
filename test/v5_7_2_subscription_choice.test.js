@@ -108,7 +108,7 @@ test("only company owner can initiate or verify billing changes; non-owners rece
   assert.match(billingService, /Only the company creator\/owner can upgrade, renew, start a trial, or change the subscription/);
   assert.match(billingService, /async memberStatus\(\{ companyId, userId \}\)/);
   assert.match(billingRoute, /billing\/status/);
-  assert.match(billingRoute, /userId:req\.user\.id/);
+  assert.match(billingRoute, /userId:\s*req\.user\.id/);
   assert.match(billingService, /async checkout\(\{companyId,userId,email,name,phone,planCode,billingInterval,providerName\}\)\{await this\.assertCompanyOwner/);
   assert.match(billingService, /async verify\(\{companyId,userId,providerName,reference,transactionId,sessionId\}\)\{await this\.assertCompanyOwner/);
 });

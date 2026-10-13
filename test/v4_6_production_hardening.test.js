@@ -30,7 +30,7 @@ test('web API has no localhost production fallback', () => {
 });
 
 test('service worker is registered in production', () => {
-  assert.match(read(path.join(web, 'src/main.jsx')), /serviceWorker\.register\('\/sw\.js'\)/);
+  assert.match(read(path.join(web, 'src/main.jsx')), /serviceWorker\.register\('\/sw\.js', \{ scope: '\/' \}\)/);
 });
 
 test('service worker cleans all stale HySmart shell caches', () => {

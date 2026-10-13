@@ -1,0 +1,28 @@
+import React,{useCallback,useEffect,useState}from'react';
+import{Wallet,Plus,CheckCircle2,RefreshCw}from'lucide-react';
+import{api}from'../lib/api';
+import{PageHeader,Card,Button,Empty}from'../components/UI';
+
+const today=()=>new Date().toISOString().slice(0,10);
+const initialForm=()=>({projectId:'',estimateItemId:'',supplierInvoiceId:'',category:'GENERAL',description:'',vendorName:'',amount:'',currency:'NGN',expenseDate:today()});
+
+export default function Expenses(){
+ const[data,setData]=useState([]);const[projects,setProjects]=useState([]);const[invoices,setInvoices]=useState([]);const[boq,setBoq]=useState([]);const[show,setShow]=useState(false);const[loading,setLoading]=useState(false);const[error,setError]=useState('');const[f,setF]=useState(initialForm);
+ const load=useCallback(async()=>{setLoading(true);setError('');try{const [expenses,projectResult,invoiceResult]=await Promise.all([api.expenses({pageSize:100}),api.projects({pageSize:100}),api.supplierInvoices({pageSize:100})]);setData(expenses.data?.items||[]);setProjects(projectResult.data?.items||[]);setInvoices(invoiceResult.data?.items||[])}catch(e){setError(e.message||'Unable to load expenses and financial links.')}finally{setLoading(false)}},[]);
+ useEffect(()=>{load()},[load]);
+ async function selectProject(projectId){setF(current=>({...current,projectId,estimateItemId:''}));setBoq([]);if(!projectId)return;try{const r=await api.boqIntelligence(projectId);setBoq(r.data?.items||[])}catch(e){setError(`Unable to load BOQ items: ${e.message||'Please retry'}`)}}
+ async function create(e){e.preventDefault();setError('');try{await api.createExpense({...f,projectId:f.projectId||undefined,estimateItemId:f.estimateItemId||undefined,supplierInvoiceId:f.supplierInvoiceId||undefined,amount:Number(f.amount)});setShow(false);setF(initialForm());await load()}catch(e){setError(e.message||'Unable to submit expense.')}}
+ const filteredInvoices=invoices.filter(i=>!f.projectId||!i.project_id||i.project_id===f.projectId);
+ return <>
+  {error&&<div className="errorbox" role="alert">{error}</div>}
+  <PageHeader title="Expenses & finance" subtitle="Submit, review and pay company expenses. Link project costs to BOQ items and supplier invoices to support accurate forecasting." action={<><Button onClick={load}><RefreshCw size={15}/>Refresh</Button><Button primary onClick={()=>{setError('');setF(initialForm());setShow(true)}}><Plus size={17}/>New expense</Button></>}/>
+  <Card><div className="tablewrap"><table><thead><tr><th>Date</th><th>Description</th><th>Project / BOQ</th><th>Supplier invoice</th><th>Category</th><th>Amount</th><th>Status</th></tr></thead><tbody>{data.map(x=><tr key={x.id}><td>{x.expense_date}</td><td>{x.description}{x.vendor_name&&<small style={{display:'block'}}>{x.vendor_name}</small>}</td><td>{projects.find(p=>p.id===x.project_id)?.name||'—'}{x.estimate_item_id&&<small style={{display:'block'}}>BOQ linked</small>}</td><td>{x.supplier_invoice_id?(invoices.find(i=>i.id===x.supplier_invoice_id)?.invoice_no||'Linked invoice'):'—'}</td><td>{x.category}</td><td>{x.currency||'NGN'} {Number(x.amount).toLocaleString()}</td><td><span className="status">{x.status}</span></td></tr>)}</tbody></table></div>{loading&&!data.length&&<p>Loading expenses…</p>}{!loading&&!data.length&&<Empty title="No expenses" text="Submit an expense to start tracking project costs."/>}</Card>
+  {show&&<div className="modal"><form className="modalcard" onSubmit={create}><h2>New expense</h2>
+   <label>Project (optional)<select value={f.projectId} onChange={e=>selectProject(e.target.value)}><option value="">Company-level expense</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+   <label>BOQ item (optional)<select value={f.estimateItemId} onChange={e=>setF({...f,estimateItemId:e.target.value})} disabled={!f.projectId}><option value="">Not linked to a BOQ item</option>{boq.map(x=><option key={x.id} value={x.id}>{x.item_no?`${x.item_no} · `:''}{x.description}</option>)}</select></label>
+   <label>Supplier invoice link (optional)<select value={f.supplierInvoiceId} onChange={e=>{const invoice=invoices.find(i=>i.id===e.target.value);setF({...f,supplierInvoiceId:e.target.value,currency:invoice?.currency||f.currency,vendorName:invoice?.supplier_name||f.vendorName})}}><option value="">No supplier invoice link</option>{filteredInvoices.map(i=><option key={i.id} value={i.id}>{i.invoice_no||i.id} · {i.currency||''} {Number(i.total||0).toLocaleString()} · {i.status}</option>)}</select><small>Link an expense to an invoice only when this expense represents that same invoice. Linked duplicates are excluded from the BOQ direct-expense total when the invoice is already counted.</small></label>
+   <label>Category<input required value={f.category} onChange={e=>setF({...f,category:e.target.value})}/></label><label>Description<input required value={f.description} onChange={e=>setF({...f,description:e.target.value})}/></label><label>Vendor<input value={f.vendorName} onChange={e=>setF({...f,vendorName:e.target.value})}/></label><label>Amount<input type="number" min="0.01" step="0.01" required value={f.amount} onChange={e=>setF({...f,amount:e.target.value})}/></label><label>Currency<input required minLength="3" maxLength="3" value={f.currency} onChange={e=>setF({...f,currency:e.target.value.toUpperCase()})}/></label><label>Date<input type="date" required value={f.expenseDate} onChange={e=>setF({...f,expenseDate:e.target.value})}/></label>
+   <div className="modalactions"><Button type="button" onClick={()=>setShow(false)}>Cancel</Button><Button primary><CheckCircle2 size={16}/>Submit</Button></div>
+  </form></div>}
+ </>
+}

@@ -4,7 +4,7 @@ import { AppService } from "../src/service.js";
 
 test("v4.2 health metadata reports current release", () => {
   const service = new AppService({ supabase: { from(){ throw new Error("not called"); } } });
-  assert.equal(service.getHealth().version, "5.7.8");
+  assert.equal(service.getHealth().version, "5.12.0");
   assert.equal(service.getHealth().status, "ok");
 });
 
@@ -31,5 +31,5 @@ test("v4.2 health route contract exposes readiness", async () => {
 
 test("current release metadata is consistent in the API source", async () => {
   const source = await import("node:fs/promises").then(fs => fs.readFile(new URL("../src/app.js", import.meta.url), "utf8"));
-  assert.match(source, /version: "5\.7\.8"/);
+  assert.match(source, /version: "5\.12\.0"/);
 });

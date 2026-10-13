@@ -17,12 +17,16 @@ const profileName=user=>String(user?.user_metadata?.full_name||user?.user_metada
 export class SupportService {
  constructor({supabase,aiProvider=null}){this.supabase=supabase;this.aiProvider=aiProvider;this.knowledgePromise=this.loadProductKnowledge();}
  async loadProductKnowledge(){
-  try {
-   const paths=[new URL('../../../HYSMART-BUILD-ABOUT-AND-USER-GUIDE.md',import.meta.url),new URL('../../knowledge/hysmart-product-knowledge.md',import.meta.url)];
-   const documents=await Promise.all(paths.map(async(path)=>({path:path.pathname,markdown:await readFile(path,'utf8')})));
-   const sections=documents.flatMap((document,docIndex)=>document.markdown.split(/(?=^#{1,2}\s+)/m).map((content,index)=>({id:`product-${docIndex}-${index}`,category:'PRODUCT_GUIDE',question:(content.match(/^#{1,2}\s+(.+)$/m)||[])[1]||'HySmart Build product guide',answer:content.trim()})).filter(item=>item.answer.length>35));
-   return [...FAQS,...sections];
-  } catch { return FAQS; }
+  // Optional documentation files must fail independently. A missing root-level
+  // guide must not silently discard the bundled product knowledge that ships
+  // with the backend package.
+  const paths=[new URL('../../../HYSMART-BUILD-ABOUT-AND-USER-GUIDE.md',import.meta.url),new URL('../../knowledge/hysmart-product-knowledge.md',import.meta.url)];
+  const documents=(await Promise.all(paths.map(async(path)=>{
+   try{return {path:path.pathname,markdown:await readFile(path,'utf8')};}
+   catch{return null;}
+  }))).filter(Boolean);
+  const sections=documents.flatMap((document,docIndex)=>document.markdown.split(/(?=^#{1,2}\s+)/m).map((content,index)=>({id:`product-${docIndex}-${index}`,category:'PRODUCT_GUIDE',question:(content.match(/^#{1,2}\s+(.+)$/m)||[])[1]||'HySmart Build product guide',answer:content.trim()})).filter(item=>item.answer.length>35));
+  return [...FAQS,...sections];
  }
  async assertCompanyMember(companyId,userId){
   const {data,error}=await this.supabase.from('company_members').select('company_id,role,status').eq('company_id',companyId).eq('user_id',userId).maybeSingle();

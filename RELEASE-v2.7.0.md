@@ -1,27 +1,15 @@
-# HySmart Build Backend v2.7.0
+# HySmart Build Web v2.7.0
 
-## Workflow Automation & Command Centre
+## Command Centre
 
-- Cross-module workflow action inbox
-- Built-in risk scans for overdue schedule activities, NCRs, RFIs, material readiness and low productivity
-- Deduplicated action generation
-- Action acknowledgement/completion/dismissal workflow
-- Configurable workflow rules and severity
-- Automation run history
-- In-app notification fan-out for assigned actions
-- Management digest endpoint
-- Tenant-safe composite foreign keys and RLS
-- Dedicated workflow RBAC permissions
+- New Command Centre navigation route
+- Unified action inbox
+- Open/overdue/critical/high counters
+- Risk scan action
+- Acknowledge and complete actions
+- Action severity and due-date presentation
+- Workflow API client methods
 
 ## Verification
 
-- Backend regression: 158/158 tests passing
-- Modified backend JavaScript syntax checks: passing
-- Web production build: not verified in this environment because the offline npm cache is missing `yallist@3.1.1`.
-
-Production CI must run:
-
-```bash
-npm ci
-npm run build
-```
+Backend regression suite: 158/158 passing. The Vite production build could not be completed locally because the environment lacks the cached `yallist@3.1.1` package required by the dependency tree.

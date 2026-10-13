@@ -7,13 +7,15 @@ import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const migration=fs.readFileSync(path.join(root,'supabase/migrations/20261010170000_v1_15_atomic_financial_workflows.sql'),'utf8');
 const service=fs.readFileSync(path.join(root,'src/services/procurementAccountingService.js'),'utf8');
+const myWorkMigration=fs.readFileSync(path.join(root,'supabase/migrations/20261013100000_v5_7_15_personal_my_work_workflows.sql'),'utf8');
 
 test('RC58 supplier invoice approval and payable journal share one database transaction',()=>{
   assert.match(migration,/create or replace function public\.approve_supplier_invoice_atomic/);
   assert.match(migration,/where company_id=p_company_id and id=p_invoice_id for update/);
   assert.match(migration,/status='APPROVED',approved_by=p_user_id,approved_at=now\(\)/);
   assert.match(migration,/source_type='SUPPLIER_INVOICE'[\s\S]{0,120}v_invoice\.id/);
-  assert.match(service,/rpc\('approve_supplier_invoice_atomic'/);
+  assert.match(service,/p_entity_type:'SUPPLIER_INVOICE'/);
+  assert.match(myWorkMigration,/select public\.approve_supplier_invoice_atomic\(p_company_id,p_entity_id,p_user_id\) into v_row/);
   assert.doesNotMatch(service,/async approveSupplierInvoice\([^]*?\.update\(\{status:'APPROVED'/);
 });
 
@@ -48,7 +50,8 @@ test('RC58 payroll header/items creation and status transitions are guarded data
   assert.match(migration,/source_type='PAYROLL_RUN'/);
   assert.match(migration,/Required payroll accounting accounts are not configured/);
   assert.match(service,/rpc\('create_payroll_run_atomic'/);
-  assert.match(service,/rpc\('transition_payroll_run_atomic'/);
+  assert.match(service,/p_entity_type:'PAYROLL_RUN'/);
+  assert.match(myWorkMigration,/select public\.transition_payroll_run_atomic\(p_company_id,p_entity_id,p_user_id,'PAID',current_date\) into v_row/);
 });
 
 test('RC58 bank reconciliation is row-locked, company-scoped and idempotent',()=>{

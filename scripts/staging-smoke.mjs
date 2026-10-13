@@ -30,11 +30,11 @@ if (!Number.isFinite(timeoutMs) || timeoutMs < 500 || timeoutMs > 60000) {
 const checks = [
   {
     name: 'API root/version', path: '/',
-    validate: (body) => body?.success === true && body?.data?.name === 'HySmart Build API' && body?.data?.version === '5.7.8'
+    validate: (body) => body?.success === true && body?.data?.name === 'HySmart Build API' && body?.data?.version === '5.12.0'
   },
   {
     name: 'health endpoint', path: '/api/v1/health',
-    validate: (body) => body?.success === true && body?.data?.status === 'ok' && body?.data?.version === '5.7.8'
+    validate: (body) => body?.success === true && body?.data?.status === 'ok' && body?.data?.version === '5.12.0'
   },
   {
     name: 'readiness/schema checks', path: '/api/v1/health/ready',

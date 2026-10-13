@@ -65,6 +65,8 @@ import { CollaborationService } from "./services/collaborationService.js";
 import { createCollaborationRouter } from "./routes/collaboration.js";
 import { WorkflowService } from "./services/workflowService.js";
 import { createWorkflowRouter } from "./routes/workflow.js";
+import { MyWorkService } from "./services/myWorkService.js";
+import { createMyWorkRouter } from "./routes/myWork.js";
 import { ExecutiveIntelligenceService } from "./services/executiveIntelligenceService.js";
 import { createExecutiveIntelligenceRouter } from "./routes/executiveIntelligence.js";
 import { TreasuryService } from "./services/treasuryService.js";
@@ -87,6 +89,7 @@ import { ProcurementRiskService } from "./services/procurementRiskService.js";
 import { ClaimsIntelligenceService } from "./services/claimsIntelligenceService.js";
 import { TruthEngineService } from "./services/truthEngineService.js";
 import { AiIntelligenceService } from "./services/aiIntelligenceService.js";
+import { ScheduleForecastService } from "./services/scheduleForecastService.js";
 import { createStrategicIntelligenceRouter } from "./routes/strategicIntelligence.js";
 import { PeopleService } from "./services/peopleService.js";
 import { createPeopleRouter } from "./routes/people.js";
@@ -99,6 +102,10 @@ import { createConstructionNetworkRouter } from "./routes/constructionNetwork.js
 import { RealityLayerService } from "./services/realityLayerService.js";
 import { FinancialIntelligenceService } from "./services/financialIntelligenceService.js";
 import { createFinancialIntelligenceRouter } from "./routes/financialIntelligence.js";
+import { ProjectCostPlanningService } from "./services/projectCostPlanningService.js";
+import { CostForecastLearningService } from "./services/costForecastLearningService.js";
+import { CashflowForecastLearningService } from "./services/cashflowForecastLearningService.js";
+import { createProjectCostPlanningRouter } from "./routes/projectCostPlanning.js";
 import { createRealityLayerRouter } from "./routes/realityLayer.js";
 import { LifecycleIntelligenceService } from "./services/lifecycleIntelligenceService.js";
 import { createLifecycleIntelligenceRouter } from "./routes/lifecycleIntelligence.js";
@@ -135,6 +142,7 @@ export function createApp({ service = new AppService({ supabase: supabaseAdmin }
   const qualityService = new QualityService({ supabase });
   const collaborationService = new CollaborationService({ supabase });
   const workflowService = new WorkflowService({ supabase });
+  const myWorkService = new MyWorkService({ supabase });
   const executiveIntelligenceService = new ExecutiveIntelligenceService({ supabase });
   const treasuryService = new TreasuryService({ supabase });
   const controlTowerService = new ControlTowerService({ executiveIntelligenceService, treasuryService, workflowService });
@@ -147,13 +155,17 @@ export function createApp({ service = new AppService({ supabase: supabaseAdmin }
   const procurementRiskService = new ProcurementRiskService({ supabase });
   const claimsIntelligenceService = new ClaimsIntelligenceService({ supabase });
   const truthEngineService = new TruthEngineService({ supabase, controlTowerService, revenueMarginService, workfrontProductionService, procurementRiskService, claimsIntelligenceService, treasuryService, operatingSystemService });
-  const aiIntelligenceService = new AiIntelligenceService({ truthEngineService, operatingSystemService });
+  const aiIntelligenceService = new AiIntelligenceService({ truthEngineService, operatingSystemService, supabase, localModel: customerCareLocalModel, localModelEnabled: env.projectAiEnabled });
+  const scheduleForecastService = new ScheduleForecastService({ supabase });
   const peopleService = new PeopleService({ supabase });
   const constructionAutopilotService = new ConstructionAutopilotService({ supabase, workflowService, truthEngineService });
   const evidenceEngineService = new EvidenceEngineService({ supabase });
   const constructionNetworkService = new ConstructionNetworkService({ supabase, webAppUrl: env.webAppUrl });
   const realityLayerService = new RealityLayerService({ supabase });
   const financialIntelligenceService = new FinancialIntelligenceService({ supabase });
+  const projectCostPlanningService = new ProjectCostPlanningService({ supabase });
+  const costForecastLearningService = new CostForecastLearningService({ supabase });
+  const cashflowForecastLearningService = new CashflowForecastLearningService({ supabase });
   const lifecycleIntelligenceService = new LifecycleIntelligenceService({ supabase });
   const constructionTypeProfileService = new ConstructionTypeProfileService({ supabase });
   const billingService = new BillingService({
@@ -187,7 +199,7 @@ export function createApp({ service = new AppService({ supabase: supabaseAdmin }
   app.use(requestId);
   app.use(auditRequest({ supabase }));
 
-  app.get("/", (_req, res) => res.json({ success: true, data: { name: "HySmart Build API", version: "5.7.8", status: "ok" } }));
+  app.get("/", (_req, res) => res.json({ success: true, data: { name: "HySmart Build API", version: "5.12.0", status: "ok" } }));
   app.use(`${env.apiPrefix}/health`, createHealthRouter({ service }));
   app.use(`${env.apiPrefix}/auth`, createAuthRouter({ supabase, rateLimiter }));
   app.use(`${env.apiPrefix}/me`, createMeRouter({ authService, companyService, authMiddleware }));
@@ -215,6 +227,7 @@ export function createApp({ service = new AppService({ supabase: supabaseAdmin }
   app.use(`${env.apiPrefix}`, createQualityRouter({ service: qualityService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createCollaborationRouter({ service: collaborationService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createWorkflowRouter({ service: workflowService, authMiddleware, authorize }));
+  app.use(`${env.apiPrefix}`, createMyWorkRouter({ service: myWorkService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createExecutiveIntelligenceRouter({ service: executiveIntelligenceService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createTreasuryRouter({ service: treasuryService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createControlTowerRouter({ service: controlTowerService, authMiddleware, authorize }));
@@ -224,13 +237,14 @@ export function createApp({ service = new AppService({ supabase: supabaseAdmin }
   app.use(`${env.apiPrefix}`, createRevenueMarginRouter({ service: revenueMarginService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createWorkfrontProductionRouter({ service: workfrontProductionService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createOperatingSystemRouter({ service: operatingSystemService, authMiddleware, authorize }));
-  app.use(`${env.apiPrefix}`, createStrategicIntelligenceRouter({ procurementRiskService, claimsIntelligenceService, truthEngineService, aiIntelligenceService, authMiddleware, authorize }));
+  app.use(`${env.apiPrefix}`, createStrategicIntelligenceRouter({ procurementRiskService, claimsIntelligenceService, truthEngineService, aiIntelligenceService, scheduleForecastService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createPeopleRouter({ peopleService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createConstructionAutopilotRouter({ service: constructionAutopilotService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createEvidenceEngineRouter({ service: evidenceEngineService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createConstructionNetworkRouter({ service: constructionNetworkService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createRealityLayerRouter({ service: realityLayerService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createFinancialIntelligenceRouter({ service: financialIntelligenceService, authMiddleware, authorize }));
+  app.use(`${env.apiPrefix}`, createProjectCostPlanningRouter({ service: projectCostPlanningService, learningService: costForecastLearningService, cashflowLearningService: cashflowForecastLearningService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createLifecycleIntelligenceRouter({ service: lifecycleIntelligenceService, authMiddleware, authorize }));
   app.use(`${env.apiPrefix}`, createConstructionTypeProfilesRouter({ service: constructionTypeProfileService, authMiddleware, authorize }));
 

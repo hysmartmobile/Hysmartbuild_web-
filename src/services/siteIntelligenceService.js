@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 const n=v=>Number(v||0);
 const today=()=>new Date().toISOString().slice(0,10);
 export class SiteIntelligenceService {
@@ -7,7 +7,7 @@ export class SiteIntelligenceService {
   async materials(companyId,projectId){
     await this.assertProject(companyId,projectId);
     const [plans,tx,po,grn]=await Promise.all([
-      this.supabase.from('project_material_plans').select('id,material_id,estimate_item_id,required_by,planned_quantity,planned_unit_cost,wastage_allowance_percent,lead_time_days,status,notes,materials:materials!project_material_plans_material_id_fkey(id,name,unit,reorder_level)').eq('company_id',companyId).eq('project_id',projectId).neq('status','CANCELLED').order('required_by',{ascending:true}),
+      this.supabase.from('project_material_plans').select('id,material_id,estimate_item_id,required_by,planned_quantity,planned_unit_cost,wastage_allowance_percent,lead_time_days,status,notes,materials:materials!project_material_plan_material_tenant_fk(id,name,unit,reorder_level)').eq('company_id',companyId).eq('project_id',projectId).neq('status','CANCELLED').order('required_by',{ascending:true}),
       this.supabase.from('inventory_transactions').select('material_id,transaction_type,quantity,created_at,materials:materials!inventory_transactions_material_id_fkey(id,name,unit,reorder_level)').eq('company_id',companyId).eq('project_id',projectId).order('created_at',{ascending:false}),
       this.supabase.from('purchase_orders').select('id,po_no,supplier_id,expected_date,status,total,order_date,suppliers:supplier_id(id,name)').eq('company_id',companyId).eq('project_id',projectId).not('status','eq','CANCELLED').order('expected_date',{ascending:true}),
       this.supabase.from('goods_received_notes').select('id,grn_no,purchase_order_id,received_date,status').eq('company_id',companyId).eq('status','POSTED').order('received_date',{ascending:false})

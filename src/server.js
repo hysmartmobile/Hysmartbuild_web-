@@ -3,7 +3,7 @@ import { createApp } from "./app.js";
 
 const app = createApp();
 const server = app.listen(env.port, "0.0.0.0", () => {
-  console.log(`HySmart Build API v5.7.8 listening on port ${env.port}`);
+  console.log(`HySmart Build API v5.12.0 listening on port ${env.port}`);
   console.log(`Environment: ${env.nodeEnv}`);
 });
 

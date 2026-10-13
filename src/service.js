@@ -13,7 +13,7 @@ export class AppService {
     return {
       status: "ok",
       service: "hysmart-build-api",
-      version: "5.7.8",
+      version: "5.12.0",
       timestamp: new Date().toISOString()
     };
   }

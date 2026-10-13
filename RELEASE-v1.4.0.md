@@ -1,22 +1,3 @@
-# HySmart Build Backend v1.4.0 — Offline Field Sync
+# HySmart Build Web PWA v1.4.0
 
-## Included
-- `POST /api/v1/companies/:companyId/sync/push`
-- `GET /api/v1/companies/:companyId/sync/status`
-- Idempotent operation journal
-- Optimistic concurrency/conflict detection
-- Retry-safe inventory movements
-- Retry-safe material requests
-- Tenant/RBAC enforcement
-
-## Supported offline operations
-- Projects create/update
-- Tasks create/update
-- Issues create/update
-- Daily reports create/update
-- Attendance create/update
-- Materials create
-- Material requests create
-- Inventory movements
-
-The server remains authoritative. A conflict is returned instead of silently overwriting a newer server record.
+The Web PWA remains the online administrative workspace and is aligned to the V1.4 backend sync contract. It continues to use the same `/api/v1` tenant-scoped API and can inspect the same company data after mobile synchronization. Offline field persistence is intentionally implemented in the React Native field client rather than duplicating SQLite on the browser.

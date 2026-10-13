@@ -66,9 +66,9 @@ test('v5.7.8 API health/version surfaces agree with package release version', ()
   const packageJson = JSON.parse(read(path.join(backend, 'package.json')));
   const app = read(path.join(backend, 'src/app.js'));
   const service = read(path.join(backend, 'src/service.js'));
-  assert.equal(packageJson.version, '5.7.8');
-  assert.match(app, /version: "5\.7\.8"/);
-  assert.match(service, /version: "5\.7\.8"/);
+  assert.equal(packageJson.version, '5.12.0');
+  assert.ok(app.includes(`version: "${packageJson.version}"`));
+  assert.ok(service.includes(`version: "${packageJson.version}"`));
   assert.doesNotMatch(app, /version: "5\.7\.1"/);
   assert.doesNotMatch(service, /version: "5\.7\.1"/);
 });

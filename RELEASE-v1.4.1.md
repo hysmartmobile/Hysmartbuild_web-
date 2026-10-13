@@ -1,15 +1,21 @@
-# HySmart Build Backend v1.4.1
+# HySmart Build Web PWA v1.4.1
 
 ## Web/backend alignment fix
 
-### Changes
-- Development CORS accepts localhost/127.0.0.1 HTTP origins so Vite port changes do not produce opaque browser `Failed to fetch` failures.
-- Company create/update schemas accept `industry`.
-- Company service persists and returns `industry`.
-- Added migration `20261002150000_v1_4_1_web_company_industry.sql`.
-- Server startup metadata now reports API v1.4.0 runtime baseline accurately rather than the stale v0.4.0 label.
+This patch release focuses on the company onboarding `Failed to fetch` integration path.
 
-### Verification
-- 55/55 tests passed.
-- TypeScript passed.
-- JS syntax passed.
+### Changes
+- Improved API network error reporting so browser connectivity/CORS failures identify the backend URL and required checks.
+- API remains centralized at `${VITE_API_URL}/api/v1`.
+- Company onboarding sends `industry` through the backend contract.
+- No mock/demo business data introduced.
+
+### Local development
+- Web default API: `http://localhost:3001`
+- Vite default: `http://localhost:5173`
+- If Vite chooses another port, backend development CORS accepts localhost/127.0.0.1 HTTP origins.
+
+
+## Post-release fix: company onboarding loop
+- Fixed Web `App.jsx` to consume the backend `/api/v1/me` `companies` array.
+- Company creation now remains in the workspace instead of returning to onboarding.

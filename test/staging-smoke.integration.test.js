@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const script = path.join(backendRoot, 'scripts', 'staging-smoke.mjs');
 const payloads = new Map([
-  ['/', { success: true, data: { name: 'HySmart Build API', version: '5.7.8' } }],
-  ['/api/v1/health', { success: true, data: { status: 'ok', version: '5.7.8' } }],
+  ['/', { success: true, data: { name: 'HySmart Build API', version: '5.12.0' } }],
+  ['/api/v1/health', { success: true, data: { status: 'ok', version: '5.12.0' } }],
   ['/api/v1/health/ready', { success: true, data: { ready: true } }],
   ['/api/v1/health/supabase', { success: true, data: { connected: true } }]
 ]);

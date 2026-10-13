@@ -15,11 +15,11 @@ test("V1.5 canonical company identity matches application contract", () => {
   assert.match(migration, /add column if not exists tax_country text/i);
 });
 
-test("V1.5 payment provider routing uses active flag", () => {
+test("payment provider routes use enabled while country catalogue uses active", () => {
   const service = read("src/services/billingService.js");
   const migration = read("supabase/migrations/20261003130000_v1_5_production_completion.sql");
-  assert.doesNotMatch(service, /eq\(["']enabled["']/);
-  assert.match(service, /eq\(["']active["'],true\)/);
+  assert.match(service, /payment_provider_routes[\s\S]*?eq\(["']enabled["'],true\)/);
+  assert.match(service, /billing_countries[\s\S]*?eq\(["']active["'],true\)/);
   assert.match(migration, /add column if not exists active boolean/i);
 });
 

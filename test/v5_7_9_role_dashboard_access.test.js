@@ -25,11 +25,11 @@ test("RC14 server redacts money and company audit details from non-finance intel
 
 test("RC14 finance-only endpoints require finance/BOQ permissions", () => {
   const routes = read("../src/routes/operatingSystem.js");
-  assert.match(routes, /money-leak',authorize\('dashboard:finance'\)/);
-  assert.match(routes, /boq-intelligence',authorize\('boq:read'\)/);
-  assert.match(routes, /boq\/:itemId',authorize\('boq:read'\)/);
-  assert.match(routes, /today\/intelligence\/refresh',authorize\('workflow:execute'\)/);
-  assert.match(routes, /today\/intelligence\/:snapshotId\/outcome',authorize\('workflow:execute'\)/);
+  assert.match(routes, /\/companies\/:companyId\/money-leak[\"'][\s\S]*?authorize\(\"dashboard:finance\"\)/);
+  assert.match(routes, /boq-intelligence[\"'][\s\S]*?authorize\(\"boq:read\"\)/);
+  assert.match(routes, /boq\/:itemId[\"'][\s\S]*?authorize\(\"boq:read\"\)/);
+  assert.match(routes, /today\/intelligence\/refresh[\"'][\s\S]*?authorize\(\"operating-system:refresh\"\)/);
+  assert.match(routes, /today\/intelligence\/:snapshotId\/outcome[\"'][\s\S]*?authorize\(\"workflow:execute\"\)/);
   const companyRoutes = read('../src/routes/companies.js');
   assert.match(companyRoutes, /z\.enum\(ROLES\.filter/);
   const rbacRoutes = read('../src/routes/rbac.js');

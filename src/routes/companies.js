@@ -31,7 +31,19 @@ export function createCompaniesRouter({ companyService, authMiddleware, authoriz
 
   router.post("/invitations/accept", async (req,res,next)=>{try{const input=acceptInvitationSchema.parse(req.body);const result=await companyService.acceptInvitation({userId:req.user.id,email:req.user.email,token:input.token,fullName:input.fullName});res.json({success:true,data:result,message:"Invitation accepted"});}catch(e){next(e)}});
 
-  router.post("/:companyId/invitations", authorize("user:invite"), async (req,res,next)=>{try{const input=invitationSchema.parse(req.body);const result=await companyService.createInvitation({companyId:req.params.companyId,invitedBy:req.user.id,...input});res.status(201).json({success:true,data:result,message:"Invitation created"});}catch(e){next(e)}});
+  router.post("/:companyId/invitations", authorize("user:invite"), async (req,res,next)=>{
+    try {
+      const input=invitationSchema.parse(req.body);
+      const inviterRole=req.authorization?.role;
+      const operationalInviteRoles=["PROJECT_MANAGER","SITE_ENGINEER","SITE_SUPERVISOR","ACCOUNTANT","STOREKEEPER","HR_MANAGER","WORKER","CLIENT","CIVIL_ENGINEER","COMMERCIAL_MANAGER","QUANTITY_SURVEYOR","PROCUREMENT_OFFICER"];
+      const canAssignRole = ["SUPER_ADMIN","COMPANY_OWNER"].includes(inviterRole)
+        ? !["SUPER_ADMIN","COMPANY_OWNER"].includes(input.role)
+        : ["COMPANY_ADMIN","DIRECTOR"].includes(inviterRole) && operationalInviteRoles.includes(input.role);
+      if(!canAssignRole) return res.status(403).json({success:false,error:{code:"ROLE_ASSIGNMENT_FORBIDDEN",message:"Your role cannot invite a member at that authority level. Ask the company owner to assign executive or administrator roles."}});
+      const result=await companyService.createInvitation({companyId:req.params.companyId,invitedBy:req.user.id,...input});
+      res.status(201).json({success:true,data:result,message:"Invitation created"});
+    } catch(e) { next(e); }
+  });
 
   router.get("/:companyId/invitations", authorize("user:invite:read"), async (req,res,next)=>{try{const page=Math.max(1,Number(req.query.page||1));const pageSize=Math.min(100,Math.max(1,Number(req.query.pageSize||50)));res.json({success:true,data:await companyService.listInvitations({companyId:req.params.companyId,page,pageSize})});}catch(e){next(e)}});
   router.post("/:companyId/invitations/:invitationId/revoke", authorize("user:invite"), async (req,res,next)=>{try{const reason=z.object({reason:z.string().trim().min(3).max(1000)}).parse(req.body).reason;res.json({success:true,data:await companyService.revokeInvitation({companyId:req.params.companyId,invitationId:req.params.invitationId,actorUserId:req.user.id,reason}),message:"Invitation revoked"});}catch(e){next(e)}});

@@ -17,7 +17,7 @@ test("web has no JSX parser diagnostics",()=>{
 });
 test("PWA service worker rotates shell cache",()=>{
  const sw=fs.readFileSync(path.join(web,"public/sw.js"),"utf8");
- assert.match(sw,/const CACHE_NAME = `\$\{CACHE_PREFIX\}v5\.7\.8-rc34`/);
+ assert.match(sw,/const CACHE_NAME = `\$\{CACHE_PREFIX\}5\.12\.0-forecast-monitoring`/);
  assert.match(sw,/caches\.delete/);
 });
 test("dark mode is persisted and exposed in settings",()=>{

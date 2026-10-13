@@ -1,7 +1,7 @@
-# HySmart Build Backend V2.1.0 — Field Operations
+# HySmart Build Web V2.1.0 — Field Operations PWA
 
-- Geolocation evidence on attendance and daily reports.
-- 500m site verification when site coordinates are configured.
-- Offline sync operation idempotency index.
-- Field lookup indexes.
-- Offline-created attendance/reports carry stable UUIDs for safe replay.
+- Offline queue now uses the dedicated sync API for supported field mutations.
+- Stable client UUIDs prevent duplicate offline-created attendance/reports.
+- Automatic sync every 15 seconds while online.
+- GPS capture for attendance and daily reports.
+- Mobile field actions are touch-friendly.

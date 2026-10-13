@@ -121,10 +121,24 @@ export class CompanyService {
     if (companyError) throw companyError;
     if (!company) { const e = new Error("Company not found"); e.code = "COMPANY_NOT_FOUND"; e.status = 404; throw e; }
 
-    // Only one live invitation per email/company. Re-inviting invalidates the old token.
-    await this.supabase.from("company_invitations")
-      .update({ status: "REVOKED", updated_at: new Date().toISOString() })
+    // Only one live invitation per email/company. Re-inviting invalidates the old token
+    // and records why it became inactive, rather than leaving an unexplained REVOKED row.
+    const supersededAt = new Date().toISOString();
+    const supersededReason = "Superseded by a replacement invitation";
+    const { data: superseded, error: supersedeFindError } = await this.supabase
+      .from("company_invitations")
+      .select("id")
       .eq("company_id", companyId).eq("status", "PENDING").ilike("email", normalizedEmail);
+    if (supersedeFindError) throw supersedeFindError;
+    if (superseded?.length) {
+      const { error: supersedeError } = await this.supabase.from("company_invitations")
+        .update({ status: "REVOKED", revoked_by: invitedBy, revoked_at: supersededAt, revocation_reason: supersededReason, updated_at: supersededAt })
+        .eq("company_id", companyId).eq("status", "PENDING").ilike("email", normalizedEmail);
+      if (supersedeError) throw supersedeError;
+      const events = superseded.map((row) => ({ company_id: companyId, invitation_id: row.id, action: "INVITATION_REVOKED", reason: supersededReason, actor_user_id: invitedBy }));
+      const { error: eventError } = await this.supabase.from("company_access_lifecycle_events").insert(events);
+      if (eventError) throw eventError;
+    }
 
     const token = randomUUID().replaceAll('-', '') + randomUUID().replaceAll('-', '');
     const tokenHash = createHash('sha256').update(token).digest('hex');
@@ -182,6 +196,12 @@ export class CompanyService {
   }
 
   async listInvitations({companyId,page=1,pageSize=50}) {
+    // Keep the status shown in the UI truthful even if nobody has opened an old link.
+    const now = new Date().toISOString();
+    const { error: expiryError } = await this.supabase.from('company_invitations')
+      .update({ status: 'EXPIRED', updated_at: now })
+      .eq('company_id', companyId).eq('status', 'PENDING').lte('expires_at', now);
+    if (expiryError) throw expiryError;
     const from=(page-1)*pageSize,to=from+pageSize-1;
     const {data,count,error}=await this.supabase.from('company_invitations').select('id,company_id,email,role,expires_at,status,invited_by,accepted_at,accepted_user_id,revoked_by,revoked_at,revocation_reason,created_at',{count:'exact'}).eq('company_id',companyId).order('created_at',{ascending:false}).range(from,to);
     if(error)throw error;return {items:data||[],page,pageSize,total:count||0,totalPages:Math.ceil((count||0)/pageSize)};
