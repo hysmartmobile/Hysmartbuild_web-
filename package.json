@@ -1,0 +1,29 @@
+{
+  "name": "@hysmart/server",
+  "version": "5.7.8",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "verify:release": "node test/v5_7_release_gate.test.js",
+    "smoke:staging": "node scripts/staging-smoke.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.1",
+    "helmet": "^8.1.0",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2"
+  }
+}

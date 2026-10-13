@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+test('RC55 BOQ-to-profitability chain has explicit procurement, GRN, inventory, field issue and cost reconciliation links',()=>{const boq=read('src/services/boqCommercialCalculations.js');const grn=read('supabase/migrations/20261006000000_v4_4_no_double_entry_grn_inventory.sql');const inv=read('supabase/migrations/20261001230000_v0_7_materials_inventory.sql');const procurement=read('src/services/procurementAccountingService.js');assert.match(boq,/invoice\.items|purchase_order_items\.estimate_item_id/i);assert.match(grn,/post_goods_received_note_atomic/);assert.match(grn,/apply_inventory_transaction/);assert.match(grn,/RECEIPT/);assert.match(inv,/transaction_type text not null check \(transaction_type in \('RECEIPT','ISSUE','ADJUSTMENT'\)\)/);assert.match(inv,/if v_after < 0 then raise exception 'Insufficient stock'/);assert.match(procurement,/add_supplier_invoice_items_atomic/);});
+test('RC55 known-value BOQ fixtures cover cost, forecast, margin and double-counting protections',()=>{const tests=read('test/boq-commercial-calculations.test.js');assert.match(tests,/known-value reconciliation fixture/);assert.match(tests,/forecastMargin: 630/);assert.match(tests,/does not fall back to PO-share allocation/);assert.match(tests,/does not double-count an expense linked to an included supplier invoice/);});
+test('RC55 release criteria distinguish source-contract checks from true end-to-end database acceptance',()=>{const audit=read('RC55-BOQ-PROFITABILITY-ACCEPTANCE.md');assert.match(audit,/not a live PostgreSQL end-to-end test/i);assert.match(audit,/field consumption/i);assert.match(audit,/rollback/i);});

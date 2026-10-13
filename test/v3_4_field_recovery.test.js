@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+test('v3.4 adds tenant-safe field recovery execution schema',()=>{const s=read('supabase/migrations/20261004240000_v3_4_field_recovery_execution.sql');for(const x of ['recovery_field_executions','company_id','project_id','plan_id','activity_id','daily_report_id','is_company_member','recovery:execute'])assert.ok(s.includes(x),`missing ${x}`);assert.match(s,/role_permissions\(role,permission_key\)/);});
+test('field recovery service validates project activity and commitment ownership',()=>{const s=read('src/services/fieldRecoveryService.js');for(const x of ['activities','INVALID_RECOVERY_ACTIVITY','INVALID_RECOVERY_COMMITMENT','recovery_field_executions','summary','target_quantity','actual_quantity'])assert.ok(s.includes(x),`missing ${x}`);});
+test('field recovery routes are permission protected',()=>{const s=read('src/routes/fieldRecovery.js');for(const x of ['recovery:read','recovery:execute','field-executions','field-execution-summary','recovery-activities'])assert.ok(s.includes(x),`missing ${x}`);});
+test('app wires field recovery service and router',()=>{const s=read('src/app.js');assert.match(s,/FieldRecoveryService/);assert.match(s,/createFieldRecoveryRouter/);assert.match(s,/fieldRecoveryService/);});
+test('web API exposes field recovery execution endpoints',()=>{const s=read('../HySmart-Build-Web/src/lib/api.js');for(const x of ['recoveryFieldExecutions','recoveryFieldExecutionSummary','recoveryActivities','createRecoveryFieldExecution','updateRecoveryFieldExecution'])assert.ok(s.includes(x),`missing ${x}`);});

@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'..');
+const migration=fs.readFileSync(path.join(root,'supabase/migrations/20261004190000_v2_5_quality_safety_compliance.sql'),'utf8');
+const service=fs.readFileSync(path.join(root,'src/services/qualityService.js'),'utf8');
+const route=fs.readFileSync(path.join(root,'src/routes/quality.js'),'utf8');
+const app=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
+const rbac=fs.readFileSync(path.join(root,'src/rbac.js'),'utf8');
+const api=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/lib/api.js'),'utf8');
+const page=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/pages/QualitySafety.jsx'),'utf8');
+
+test('v2.5 creates quality, NCR, action, safety and compliance records',()=>{for(const x of ['quality_inspections','quality_inspection_items','quality_ncrs','quality_actions','safety_observations','safety_incidents','compliance_permits'])assert.match(migration,new RegExp(x));});
+test('v2.5 supports checklist templates and evidence metadata',()=>{assert.match(migration,/quality_checklist_templates/);assert.match(migration,/evidence jsonb/);assert.match(service,/templates\(/);assert.match(route,/quality\/templates/);});
+test('v2.5 enforces tenant-safe project and site links',()=>{for(const x of ['qinsp_project_tenant_fk','qinsp_site_tenant_fk','qitem_inspection_tenant_fk','qncr_project_tenant_fk','qncr_site_tenant_fk','qaction_project_tenant_fk','sobs_project_tenant_fk','sobs_site_tenant_fk','sinc_project_tenant_fk','sinc_site_tenant_fk','permit_project_tenant_fk'])assert.match(migration,new RegExp(x));assert.match(migration,/validate_v25_quality_links/);});
+test('v2.5 enables RLS on all compliance domains',()=>{for(const x of ['quality_inspections','quality_ncrs','quality_actions','safety_observations','safety_incidents','compliance_permits','quality_audit_events'])assert.match(migration,new RegExp(`alter table public\\.${x} enable row level security`));});
+test('v2.5 defines dedicated RBAC permissions',()=>{for(const x of ['quality:read','quality:manage','quality:approve','safety:read','safety:manage','compliance:read','compliance:manage']){assert.match(migration,new RegExp(x));assert.match(rbac,new RegExp(x));}});
+test('quality dashboard derives quality, safety and compliance alerts',()=>{for(const x of ['failedInspections','averageScore','ncrCritical','actionsOverdue','safetyHigh','permitsExpiring','FAILED_INSPECTIONS','CRITICAL_NCR','OVERDUE_ACTIONS','SAFETY_RISK','EXPIRING_PERMITS'])assert.match(service,new RegExp(x));});
+test('quality writes preserve actor identity and append audit events',()=>{assert.match(service,/created_by:userId/);assert.match(service,/quality_audit_events/);assert.match(service,/await this\.log\(/);});
+test('router protects quality safety and compliance endpoints',()=>{for(const x of ["quality:read","quality:manage","quality:approve","safety:read","safety:manage","compliance:read","compliance:manage"])assert.match(route,new RegExp(`authorize\\('${x}'\\)`));});
+test('app mounts quality router and service',()=>{assert.match(app,/QualityService/);assert.match(app,/createQualityRouter/);assert.match(app,/qualityService/);});
+test('web exposes quality workflows and navigation',()=>{for(const x of ['qualityDashboard','qualityInspections','createQualityInspection','qualityNcrs','createQualityNcr','qualityActions','createQualityAction','safety','createSafetyObservation','createSafetyIncident','compliancePermits','createCompliancePermit'])assert.match(api,new RegExp(x));for(const x of ['Quality & Safety','New inspection','Raise NCR','Corrective action','Safety observation','Safety incident / near miss','Compliance permit'])assert.match(page,new RegExp(x));const layout=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/components/Layout.jsx'),'utf8');const appWeb=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/App.jsx'),'utf8');assert.match(layout,/quality-safety/);assert.match(appWeb,/QualitySafety/);});

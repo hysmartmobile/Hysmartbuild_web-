@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(new URL('..',import.meta.url).pathname);
+const migration=fs.readFileSync(path.join(root,'supabase/migrations/20261006160000_v5_6_construction_type_profiles.sql'),'utf8');
+const app=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
+const web=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/App.jsx'),'utf8');
+const projects=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/pages/Projects.jsx'),'utf8');
+const layout=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/components/Layout.jsx'),'utf8');
+assert.match(migration,/construction_type/);assert.match(migration,/BUILDING.*ESTATE.*ROAD_CIVIL.*MEP.*INDUSTRIAL_EPC.*RENOVATION.*FIT_OUT/s);
+assert.match(migration,/projects_construction_type_check/);assert.match(migration,/company_id,construction_type/);
+assert.match(app,/createConstructionTypeProfilesRouter/);assert.match(app,/ConstructionTypeProfileService/);
+assert.match(web,/ConstructionTypeProfiles/);assert.match(web,/path="construction-types"/);assert.match(projects,/Construction type/);assert.match(projects,/ESTATE/);assert.match(layout,/construction-types/);
+console.log('v5.6 construction type profile regression checks passed');

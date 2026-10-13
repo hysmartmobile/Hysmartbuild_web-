@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import path from 'node:path';
+const root=path.resolve(process.cwd());const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+test('v3.1 creates recovery accountability schema',()=>{const s=read('supabase/migrations/20261004240000_v3_1_recovery_accountability.sql');for(const x of ['project_recovery_plans','recovery_plan_actions','recovery_plan_reviews','recovery:read','recovery:manage'])assert.match(s,new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));assert.match(s,/row level security/);assert.match(s,/recovery_plan_project_tenant_fk/);assert.match(s,/recovery_plan_actions_workflow_tenant_fk/);assert.match(s,/recovery_plan_reviews_plan_tenant_fk/);});
+test('recovery service links existing workflow actions instead of creating a second task system',()=>{const s=read('src/services/recoveryService.js');assert.match(s,/workflow_action_items/);assert.match(s,/attachActions/);assert.match(s,/recovery_plan_reviews/);assert.match(s,/healthScore/);});
+test('recovery routes enforce read/manage permissions',()=>{const s=read('src/routes/recovery.js');assert.match(s,/recovery:read/);assert.match(s,/recovery:manage/);assert.match(s,/review/);assert.match(s,/actions/);});
+test('app wires recovery service and route',()=>{const s=read('src/app.js');assert.match(s,/RecoveryService/);assert.match(s,/createRecoveryRouter/);assert.match(s,/recoveryService/);});
+test('web exposes recovery plan workflow',()=>{const a=read('../HySmart-Build-Web/src/App.jsx');const api=read('../HySmart-Build-Web/src/lib/api.js');const l=read('../HySmart-Build-Web/src/components/Layout.jsx');const p=read('../HySmart-Build-Web/src/pages/Recovery.jsx');for(const s of [a,api,l,p])assert.match(s,/Recovery|recovery/i);assert.match(p,/reviewRecoveryPlan/);assert.match(p,/attachRecoveryActions/);});

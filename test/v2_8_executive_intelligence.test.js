@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(process.cwd());
+const read=(p)=>fs.readFileSync(path.join(root,p),'utf8');
+test('v2.8 migration creates tenant-safe executive intelligence snapshots',()=>{const s=read('supabase/migrations/20261004220000_v2_8_executive_intelligence.sql');assert.match(s,/executive_intelligence_snapshots/);assert.match(s,/foreign key\(company_id,project_id\) references public\.projects\(company_id,id\)/);assert.match(s,/executive:read/);});
+test('executive service computes explainable health and forecasts',()=>{const s=read('src/services/executiveIntelligenceService.js');assert.match(s,/forecastCost/);assert.match(s,/healthScore/);assert.match(s,/criticalOverdue/);assert.match(s,/highRisks/);assert.match(s,/recommendations/);});
+test('executive routes are permission protected',()=>{const s=read('src/routes/executiveIntelligence.js');assert.match(s,/authorize\('executive:read'\)/);assert.match(s,/executive-intelligence\/portfolio/);assert.match(s,/executive-intelligence\/trends/);});
+test('web exposes executive intelligence dashboard',()=>{const s=read('../HySmart-Build-Web/src/pages/ExecutiveIntelligence.jsx');assert.match(s,/Executive Intelligence/);assert.match(s,/healthScore/);const a=read('../HySmart-Build-Web/src/App.jsx');assert.match(a,/executive-intelligence/);const api=read('../HySmart-Build-Web/src/lib/api.js');assert.match(api,/executivePortfolio/);});

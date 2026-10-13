@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'..');
+const migration=fs.readFileSync(path.join(root,'supabase/migrations/20261004180000_v2_4_procurement_materials_productivity.sql'),'utf8');
+const service=fs.readFileSync(path.join(root,'src/services/siteIntelligenceService.js'),'utf8');
+const route=fs.readFileSync(path.join(root,'src/routes/siteIntelligence.js'),'utf8');
+const app=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
+const api=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/lib/api.js'),'utf8');
+const page=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/pages/SiteIntelligence.jsx'),'utf8');
+
+test('v2.4 creates material planning and productivity records',()=>{assert.match(migration,/project_material_plans/);assert.match(migration,/project_productivity_records/);assert.match(migration,/wastage_allowance_percent/);assert.match(migration,/labour_hours/);});
+test('v2.4 enforces tenant-safe project, material, BOQ and site links',()=>{for(const x of ['project_material_plan_material_tenant_fk','project_material_plan_project_tenant_fk','project_material_plan_estimate_tenant_fk','productivity_project_tenant_fk','productivity_site_tenant_fk','productivity_estimate_tenant_fk'])assert.match(migration,new RegExp(x));assert.match(migration,/validate_v24_project_material_plan/);assert.match(migration,/validate_v24_productivity_record/);});
+test('v2.4 has RLS and dedicated permissions',()=>{assert.match(migration,/alter table public\.project_material_plans enable row level security/);assert.match(migration,/alter table public\.project_productivity_records enable row level security/);assert.match(migration,/site-intelligence:read/);assert.match(migration,/site-intelligence:manage/);assert.doesNotMatch(migration,/PROCUREMENT_OFFICER/);});
+test('site intelligence derives material readiness and procurement risk',()=>{for(const x of ['plannedValue','receivedQuantity','issuedQuantity','remainingToReceive','overdue','atRisk','purchase_orders','goods_received_notes'])assert.match(service,new RegExp(x));});
+test('site intelligence derives labour productivity',()=>{for(const x of ['labourHours','quantityCompleted','productivity','activeTrades'])assert.match(service,new RegExp(x));});
+test('write operations validate project and persist audit identity',()=>{assert.match(service,/assertProject\(companyId,projectId\)/g);assert.match(service,/created_by:userId/);});
+test('router protects intelligence reads and writes',()=>{assert.match(route,/authorize\('site-intelligence:read'\)/);assert.match(route,/authorize\('site-intelligence:manage'\)/);assert.match(route,/site-intelligence\/materials/);assert.match(route,/site-intelligence\/productivity/);});
+test('app mounts site intelligence router',()=>{assert.match(app,/SiteIntelligenceService/);assert.match(app,/createSiteIntelligenceRouter/);assert.match(app,/siteIntelligenceService/);});
+test('web exposes site intelligence APIs and page',()=>{for(const x of ['siteMaterialIntelligence','siteProductivity','createMaterialPlan','createProductivity'])assert.match(api,new RegExp(x));for(const x of ['Material readiness','Procurement pipeline','Productivity by BOQ item','Material plan','Productivity record'])assert.match(page,new RegExp(x));});
+test('web has a dedicated navigation route',()=>{const layout=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/components/Layout.jsx'),'utf8');const appWeb=fs.readFileSync(path.resolve(root,'../HySmart-Build-Web/src/App.jsx'),'utf8');assert.match(layout,/site-intelligence/);assert.match(appWeb,/SiteIntelligence/);});
