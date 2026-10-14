@@ -1,52 +1,83 @@
-/* HySmart Build service worker.
- * Cache only the public application shell and fingerprinted static assets.
- * Never cache API responses, authenticated page data, or arbitrary same-origin GETs.
+/* HySmart Build PWA service worker.
+ * Cache only the public app shell and same-origin static build assets.
+ * Authenticated API responses, user data, and non-GET requests are never cached.
  */
-const CACHE_PREFIX = 'hysmart-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v5.7.8-rc34`;
-const SHELL = ['/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png', '/images/hysmart-onboarding.webp', '/images/hysmart-login.webp', '/images/hysmart-signup.webp'];
-const STATIC_PREFIXES = ['/assets/'];
-const STATIC_FILES = new Set(['/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png', '/images/hysmart-onboarding.webp', '/images/hysmart-login.webp', '/images/hysmart-signup.webp']);
+'use strict';
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(SHELL))
-      .then(() => self.skipWaiting())
-  );
+const CACHE_PREFIX = 'hysmart-pwa-shell-';
+const CACHE_NAME = `${CACHE_PREFIX}5.13.2-guided-onboarding`;
+const SHELL_KEY = new URL('/__hysmart_public_app_shell__', self.location.origin).href;
+const SHELL_ASSETS = [
+  '/index.html',
+  '/manifest.webmanifest',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/images/hysmart-onboarding.webp',
+  '/images/hysmart-login.webp',
+  '/images/hysmart-signup.webp'
+];
+const CACHEABLE_PUBLIC_FILES = new Set(SHELL_ASSETS.slice(1));
+const isSameOrigin = (url) => url.origin === self.location.origin;
+const isStaticBuildAsset = (pathname) => pathname.startsWith('/assets/');
+
+self.addEventListener('install', (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    // Cache the document under a private synthetic key so a deep route's response
+    // can never accidentally replace the offline application shell.
+    const shellResponse = await fetch('/index.html', { cache: 'reload', credentials: 'same-origin' });
+    if (!shellResponse.ok) throw new Error(`Unable to precache app shell (${shellResponse.status})`);
+    await cache.put(SHELL_KEY, shellResponse.clone());
+    await Promise.all(SHELL_ASSETS.slice(1).map(async (path) => {
+      try {
+        const response = await fetch(path, { cache: 'reload', credentials: 'same-origin' });
+        if (response.ok && response.type === 'basic') await cache.put(path, response);
+      } catch {
+        // A missing optional illustration should not prevent installation of the PWA.
+      }
+    }));
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys
-        .filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
-        .map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+      .map((key) => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return;
+  if (!isSameOrigin(url)) return;
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) return;
+  if (request.headers.has('authorization')) return;
 
-  // App navigation: prefer the live app shell; use the cached shell only offline.
-  // Do not cache route-specific responses under their route URLs.
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
         const response = await fetch(request);
-        if (response && response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        if (response.ok && contentType.includes('text/html')) {
           const cache = await caches.open(CACHE_NAME);
-          await cache.put('/', response.clone());
+          await cache.put(SHELL_KEY, response.clone());
         }
         return response;
       } catch {
-        return (await caches.match('/')) || new Response('HySmart Build is offline. Reconnect and try again.', {
+        const cachedShell = await caches.match(SHELL_KEY);
+        if (cachedShell) return cachedShell;
+        return new Response('HySmart Build is offline. Reconnect to open your workspace.', {
           status: 503,
           statusText: 'Offline',
           headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }
@@ -56,22 +87,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache only fingerprinted build assets and explicitly public shell resources.
-  const isBuildAsset = STATIC_PREFIXES.some(prefix => url.pathname.startsWith(prefix));
-  if (!isBuildAsset && !STATIC_FILES.has(url.pathname)) return;
+  const isKnownPublicFile = CACHEABLE_PUBLIC_FILES.has(url.pathname);
+  if (!isStaticBuildAsset(url.pathname) && !isKnownPublicFile) return;
 
   event.respondWith((async () => {
     const cached = await caches.match(request);
     if (cached) return cached;
     try {
       const response = await fetch(request);
-      if (response && response.ok && response.type === 'basic') {
+      if (response.ok && response.type === 'basic') {
         const cache = await caches.open(CACHE_NAME);
         await cache.put(request, response.clone());
       }
       return response;
     } catch {
-      return new Response('This resource is not available offline.', {
+      return new Response('This app resource is not available offline.', {
         status: 503,
         statusText: 'Offline',
         headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }

@@ -53,7 +53,10 @@ test('offline sync failures are visible and failed changes can be retried delibe
 
 test('PWA service worker has a release-specific cache and never caches API responses', () => {
   const worker = readFileSync(path.resolve(srcDir, '../public/sw.js'), 'utf8');
-  assert.ok(worker.includes('v5.7.8-rc34'));
-  assert.ok(worker.includes("if (url.pathname.startsWith('/api/')) return;"));
+  assert.ok(worker.includes('5.13.2-guided-onboarding'));
+  assert.ok(worker.includes('SHELL_KEY'));
+  assert.ok(worker.includes("request.headers.has('authorization')"));
+  assert.ok(worker.includes("request.mode === 'navigate'"));
+  assert.ok(worker.includes("url.pathname.startsWith('/api/')"));
   assert.ok(worker.includes("key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME"));
 });

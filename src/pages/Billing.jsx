@@ -11,6 +11,7 @@ import {
 
 import { PageHeader, Card, Button } from '../components/UI';
 import { api } from '../lib/api';
+import { getSubscriptionTiming } from '../lib/subscriptionTime';
 
 const normalizeCode = (value) =>
   String(value ?? '').trim().toUpperCase();
@@ -253,8 +254,14 @@ export default function Billing({
   const trialEnd = subscription?.trial_ends_at;
   const hasSubscription = Boolean(subscription);
 
-  const periodEnd =
-    trialEnd || subscription?.current_period_end;
+  const timing = getSubscriptionTiming(subscription, status);
+  const periodEnd = timing.endAt || (status === 'TRIAL' ? trialEnd : subscription?.current_period_end) || null;
+  const daysRemaining = timing.daysRemaining;
+  const remainingLabel = status === 'EXPIRED' || status === 'SUSPENDED' || timing.expired
+    ? 'Expired'
+    : daysRemaining === null
+      ? 'Not available'
+      : `${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining`;
 
   async function startTrial() {
     if (
@@ -514,6 +521,16 @@ export default function Billing({
         </div>
       )}
 
+      {(status === 'EXPIRED' || status === 'SUSPENDED' || status === 'CANCELLED') && (
+        <div className="billing-expired-notice" role="alert">
+          <CreditCard size={20} />
+          <div>
+            <strong>{status === 'SUSPENDED' ? 'Subscription access is suspended' : status === 'CANCELLED' ? 'Subscription is cancelled' : 'Your subscription has expired'}</strong>
+            <p>{canManageBilling ? 'Choose a plan below to renew or upgrade. Your workspace access will be restored after the payment is verified.' : 'Please contact your company owner to renew or upgrade. Workspace access will be restored automatically after payment is verified.'}</p>
+          </div>
+        </div>
+      )}
+
       {!hasSubscription && canStartTrial && (
         <Card>
           <div className="cardtitle">
@@ -596,9 +613,10 @@ export default function Billing({
 
           <div>
             <span>
-              {status === 'TRIAL' ? 'Trial ends' : 'Period ends'}
+              {timing.isTrial ? (timing.expired ? 'Trial ended' : 'Trial ends') : (timing.expired ? 'Period ended' : 'Period ends')}
             </span>
             <b>{formatDate(periodEnd)}</b>
+            <small className={status === 'EXPIRED' || status === 'SUSPENDED' || timing.expired ? 'billing-expiry-text' : 'billing-remaining-text'}>{remainingLabel}</small>
           </div>
         </div>
 
