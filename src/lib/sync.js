@@ -1,8 +1,11 @@
 import { supabase } from './supabase';
 import { listMutations, removeMutation, updateMutation } from './offlineQueue';
-const BASE=(import.meta.env.VITE_API_URL||'').replace(/\/$/,'');
+import { resolveApiBase } from './apiBase';
+const API_BASE_CONFIG=resolveApiBase(import.meta.env.VITE_API_URL,{isDev:import.meta.env.DEV,isProd:import.meta.env.PROD});
+const BASE=API_BASE_CONFIG.base;
 const API=`${BASE}/api/v1`;
 async function flushOfflineMutationsOnce(){
+  if(API_BASE_CONFIG.error)return {synced:0,pending:(await listMutations()).length,error:API_BASE_CONFIG.error};
   if(!navigator.onLine)return {synced:0,pending:(await listMutations()).length};
   const queued=await listMutations(); const actionable=queued.filter(item=>!item.state||item.state==='pending'||item.state==='syncing'); const {data}=await supabase.auth.getSession(); if(!data.session)return {synced:0,pending:queued.length};
   let synced=0,conflicts=0;

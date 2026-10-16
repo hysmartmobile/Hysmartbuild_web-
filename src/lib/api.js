@@ -1,8 +1,11 @@
 import { supabase } from './supabase';
 import { enqueueMutation } from './offlineQueue';
+import { resolveApiBase } from './apiBase';
 
-const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_CONFIG = resolveApiBase(import.meta.env.VITE_API_URL, { isDev: import.meta.env.DEV, isProd: import.meta.env.PROD });
+const BASE = API_BASE_CONFIG.base;
 const API = `${BASE}/api/v1`;
+function assertApiBaseConfigured() { if (API_BASE_CONFIG.error) throw new Error(API_BASE_CONFIG.error); }
 const COMPANY_KEY = 'hysmart.company_id';
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -23,6 +26,7 @@ export function setSelectedCompany(id){ if(id) localStorage.setItem(COMPANY_KEY,
 export function companyId(){ const id=getSelectedCompany(); if(!id) throw new Error('Select a company workspace first'); return id; }
 
 async function call(path, opts={}){
+  assertApiBaseConfigured();
   const { data } = await supabase.auth.getSession();
   const headers = { ...(opts.body instanceof FormData ? {} : {'Content-Type':'application/json'}), ...(opts.headers||{}) };
   if(data.session) headers.Authorization=`Bearer ${data.session.access_token}`;
@@ -231,5 +235,5 @@ export const api={syncStatus:async()=>call(`/companies/${await cid()}/sync/statu
   platformAdminUpdateTicket:(id,p)=>call(`/admin/support/tickets/${id}`,{method:'PATCH',body:JSON.stringify(p)}),
   platformAdminFeedback:()=>adminAllPages('/admin/feedback'),
   platformAdminUpdateFeedback:(id,p)=>call(`/admin/feedback/${id}`,{method:'PATCH',body:JSON.stringify(p)}),
-  downloadReport:async(type,params)=>{const {data}=await supabase.auth.getSession();const headers=data.session?{Authorization:`Bearer ${data.session.access_token}`}:{ };const r=await fetch(`${API}/companies/${cid()}/reports/${type}.csv${q(params)}`,{headers});if(!r.ok)throw new Error('Export failed');return r.blob()}
+  downloadReport:async(type,params)=>{assertApiBaseConfigured();const {data}=await supabase.auth.getSession();const headers=data.session?{Authorization:`Bearer ${data.session.access_token}`}:{ };const r=await fetch(`${API}/companies/${cid()}/reports/${type}.csv${q(params)}`,{headers});if(!r.ok)throw new Error('Export failed');return r.blob()}
 };
